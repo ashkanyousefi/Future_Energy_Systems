@@ -47,7 +47,7 @@ def kwargs():
         'q_func': model,
         'replay_buffer_size': 50000,
         'batch_size': 32,
-        'gamma': 0.995,
+        'gamma': 0.99,
         'learning_starts': 1000,
         'learning_freq': 1,
         'frame_history_len': 1,
@@ -72,7 +72,7 @@ def learn(env, session, num_timesteps, seed):
         session=session,
         exploration=exploration_schedule,
         stopping_criterion=stop_criterion(num_timesteps),
-        double_q=True,
+        double_q=False,
         **kwargs()
     )
     env.close()

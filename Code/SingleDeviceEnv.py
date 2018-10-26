@@ -50,12 +50,14 @@ class Environment:
         return [self.time_stamp, self.schedule_start, self.schedule_stop, self.state_accumulation, self.usage_duration]
 
     def reward(self, action):
-
-        reward_function = (1-self.done) * self.penalty + (action*self.electricity_cost[self.time_stamp]*self.appliances_consumption) + self.done*100
-        if len(self.episode_rewards) == 0:
-            self.episode_rewards.append(reward_function)
-        else:
-            self.episode_rewards.append(self.episode_rewards[-1]+reward_function)
+        reward_function = (1-self.done) * self.penalty + (action*self.electricity_cost[self.time_stamp]*self.appliances_consumption)
+        if self.time_stamp <= self.schedule_stop and self.time_stamp >= self.schedule_start:
+            if action == 1:
+                reward_function += 20
+            else:
+                reward_function -= self.udc
+                
+        self.episode_rewards.append(reward_function)
         return reward_function
 
     def step(self, action):
@@ -75,8 +77,8 @@ def get_random_env():
     appliances_consumption = np.random.randint(1, 10) / 10
     electricity_cost = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 12, 12, 5, 5, 5, 5, 10, 10, 10, 5, 5, 5]) / 10
     schedule_start = np.random.randint(0, 12)
-    schedule_stop = np.random.randint(12, 23)
-    usage_duration = np.random.randint(1, 12)
+    schedule_stop = np.random.randint(13, 23)
+    usage_duration = np.random.randint(0, schedule_stop - schedule_start)
 
     return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop, usage_duration, -.2)
 
@@ -105,7 +107,7 @@ if __name__ == '__main__':
 
     while not done:
         state, reward, done = env.step(action)
-        print("time stamp %s, current %s, needed %s, reward %s, done %s" % (state.time_stamp, state.state_accumulation, usage_duration, reward, done))
+        print("time stamp %s, current %s, needed %s, reward %s, done %s" % (state[0], state[3], usage_duration, reward, done))
 
 
     # The setting for the Environment class presented in the following

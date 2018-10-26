@@ -31,7 +31,7 @@ class QLearner(object):
     target_update_freq=10000,
     grad_norm_clipping=10,
     rew_file=None,
-    double_q=True,
+    double_q=False,
     lander=False):
     """Run Deep Q-learning algorithm.
 
@@ -109,7 +109,7 @@ class QLearner(object):
     # BUILD MODEL #
     ###############
 
-    input_shape = env.get_obs_shape()
+    input_shape = env.get_obs_shape() # 7
     self.num_actions = self.env.get_action_shape()
 
     # set up placeholders
@@ -201,7 +201,7 @@ class QLearner(object):
     self.mean_episode_reward      = -float('nan')
     self.best_mean_episode_reward = -float('inf')
     self.last_obs = self.env.reset()
-    self.log_every_n_steps = 10000
+    self.log_every_n_steps = 5000
 
     self.start_time = None
     self.t = 0
