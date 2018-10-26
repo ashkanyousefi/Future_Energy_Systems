@@ -30,7 +30,7 @@ def stop_criterion(num_timesteps):
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
-        return env.done
+        return env.done or t >= num_timesteps 
     return stopping_criterion
 
 def exploration_schedule(num_timesteps):
@@ -75,7 +75,6 @@ def learn(env, session, num_timesteps, seed):
         double_q=False,
         **kwargs()
     )
-    env.close()
 
 def set_global_seeds(i):
     tf.set_random_seed(i)

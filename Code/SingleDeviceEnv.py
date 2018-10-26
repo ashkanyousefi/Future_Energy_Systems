@@ -24,6 +24,7 @@ class Environment:
         self.time_stamp = 0
         self.state_accumulation = 0
         self.episode_rewards = []
+        self.history_actions = []
 
     def get_action_shape(self):
         return 1
@@ -39,6 +40,7 @@ class Environment:
         self.time_stamp = 0
         self.state_accumulation = 0
         self.episode_rewards = []
+        self.history_actions = []
 
     def action_space_sample(self):
         return random.randint(0, 1)
@@ -56,18 +58,20 @@ class Environment:
                 reward_function += 20
             else:
                 reward_function -= self.udc
-                
+
         self.episode_rewards.append(reward_function)
         return reward_function
 
     def step(self, action):
-
-        #self.sta.state_accumulation += action
+        self.history_actions.append(action)
         if action == 1 and self.time_stamp <= self.schedule_stop and self.time_stamp >= self.schedule_start:
             self.state_accumulation += 1
 
         self.time_stamp += 1
         self.done = self.time_stamp == 23 or self.state_accumulation >= self.usage_duration
+        if self.done:
+            #print(history_actions)
+            pass
         return self.get_obs(), self.reward(action), self.done
 
 def get_random_env():
