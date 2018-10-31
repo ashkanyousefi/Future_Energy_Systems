@@ -39,8 +39,8 @@ class Environment:
         self.done = False
         self.time_stamp = 0
         self.state_accumulation = 0
-        self.episode_rewards = []
         self.history_actions = []
+        return self.get_obs()
 
     def action_space_sample(self):
         return random.randint(0, 1)
@@ -96,24 +96,11 @@ if __name__ == '__main__':
     #
     # electricity_price = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 12, 12, 5, 5, 5, 5, 10, 10, 10, 5, 5, 5])
     # print(Environment.time_stamp)
-    appliances_number = 1
-    udc = np.array([1, 1, 1])
-    appliances_consumption = np.array([3, 4, 5])
-    electricity_cost = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 12, 12, 5, 5, 5, 5, 10, 10, 10, 5, 5, 5]) / 10
-    schedule_start = [10, 11, 10]
-    schedule_stop = [19, 17, 21]
-    usage_duration = [2, 3, 1]
-    action = 1
+    env = get_random_env()
 
-    for start, stop, duration, consumption in zip(schedule_start, schedule_stop, usage_duration, appliances_consumption):
-        env = Environment(appliances_number, consumption, electricity_cost, udc, start, stop, duration, -.2)
-    done = False
-
-    while not done:
-        state, reward, done = env.step(action)
-        print("time stamp %s, current %s, needed %s, reward %s, done %s" % (state[0], state[3], usage_duration, reward, done))
-
-
-    # The setting for the Environment class presented in the following
-
-    # The setting for the state class is set in the following
+    for i in range(0, int(1e5)):
+        ob, r, done = env.step(1)
+        if done:
+            env.reset()
+        if i % 1000 == 0:
+            print(np.mean(env.episode_rewards[-100:]))
