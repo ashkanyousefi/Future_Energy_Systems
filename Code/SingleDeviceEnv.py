@@ -2,6 +2,7 @@
 import numpy as np
 import random
 
+
 # Class Environment
 
 class Action:
@@ -20,6 +21,7 @@ class Environment:
         self.schedule_stop = schedule_stop
         self.usage_duration = usage_duration
         self.penalty = penalty
+        self.preferences_satisfied = True
         self.done = False
         self.time_stamp = 0
         self.state_accumulation = 0
@@ -30,12 +32,6 @@ class Environment:
         return 1
 
     def reset(self):
-        self.appliances_number = 1
-        self.udc = 1
-        self.appliances_consumption = np.random.randint(1, 10) / 10
-        self.schedule_start = np.random.randint(0, 12)
-        self.schedule_stop = np.random.randint(12, 23)
-        self.usage_duration = np.random.randint(1, 12)
         self.done = False
         self.time_stamp = 0
         self.state_accumulation = 0
@@ -49,42 +45,43 @@ class Environment:
         return len(self.get_obs())
 
     def get_obs(self):
-        return [self.time_stamp, self.schedule_start, self.schedule_stop, self.state_accumulation, self.usage_duration]
+        return [self.time_stamp, self.state_accumulation]
 
     def reward(self, action):
-        reward_function = (1-self.done) * self.penalty + (action*self.electricity_cost[self.time_stamp]*self.appliances_consumption)
-        if self.time_stamp <= self.schedule_stop and self.time_stamp >= self.schedule_start:
-            if action == 1:
-                reward_function += 20
-            else:
-                reward_function -= self.udc
+        condition = (not self.preferences_satisfied) and self.time_stamp >= self.schedule_stop
+
+        reward_function = condition * self.penalty + (1 - condition) * \
+                          (action * self.electricity_cost[self.time_stamp] * self.appliances_consumption + \
+                           (1 - action) * self.udc * self.appliances_consumption)
 
         self.episode_rewards.append(reward_function)
         return reward_function
 
     def step(self, action):
         self.history_actions.append(action)
-        if action == 1 and self.time_stamp <= self.schedule_stop and self.time_stamp >= self.schedule_start:
-            self.state_accumulation += 1
-
+        self.state_accumulation += action
+        if self.state_accumulation < self.usage_duration and self.time_stamp == self.schedule_stop:
+            self.preferences_satisfied = False
+        reward = self.reward(action)
         self.time_stamp += 1
-        self.done = self.time_stamp == 23 or self.state_accumulation >= self.usage_duration
-        if self.done:
-            #print(history_actions)
-            pass
-        return self.get_obs(), self.reward(action), self.done
+        self.done = self.time_stamp == 24
+        return self.get_obs(), reward, self.done
+
 
 def get_random_env():
-
     appliances_number = 1
     udc = 1
     appliances_consumption = np.random.randint(1, 10) / 10
     electricity_cost = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 12, 12, 5, 5, 5, 5, 10, 10, 10, 5, 5, 5]) / 10
-    schedule_start = np.random.randint(0, 12)
-    schedule_stop = np.random.randint(13, 23)
-    usage_duration = np.random.randint(0, schedule_stop - schedule_start)
+    # schedule_start = np.random.randint(0, 12)
+    # schedule_stop = np.random.randint(13, 23)
+    # usage_duration = np.random.randint(0, schedule_stop - schedule_start)
+    schedule_start = 5
+    schedule_stop = 10
+    usage_duration = 4
 
-    return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop, usage_duration, -.2)
+    return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop,
+                       usage_duration, -.2)
 
 
 if __name__ == '__main__':
@@ -98,9 +95,14 @@ if __name__ == '__main__':
     # print(Environment.time_stamp)
     env = get_random_env()
 
-    for i in range(0, int(1e5)):
-        ob, r, done = env.step(1)
-        if done:
-            env.reset()
-        if i % 1000 == 0:
-            print(np.mean(env.episode_rewards[-100:]))
+    # for i in range(0, int(1e5)):
+    #     ob, r, done = env.step(1)
+    # if done:
+    #     env.reset()
+    # if i % 1000 == 0:
+    #     print(np.mean(env.episode_rewards[-100:]))
+    print(f'schedule: {env.schedule_start} - {env.schedule_stop}, duration: {env.usage_duration}')
+    while not env.done:
+        a = np.random.randint(0, 2)
+        ob, r, done = env.step(a)
+        print(f'action: {a}, reward: {r}, obs: {ob}')
