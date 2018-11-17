@@ -1,11 +1,18 @@
-import numpy as np
 import tensorflow as tf
 import logz
 import os
 import time
 import inspect
-from multiprocessing import Process
-from SingleDeviceEnv import *
+from single_device_env import *
+import inspect
+import os
+import time
+
+import logz
+import tensorflow as tf
+
+from single_device_env import *
+
 
 #============================================================================================#
 # Utilities
