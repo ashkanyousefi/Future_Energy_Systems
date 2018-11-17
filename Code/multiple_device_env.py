@@ -1,6 +1,7 @@
 # import the required modules
-import numpy as np
 import random
+
+import numpy as np
 
 
 # Class Environment

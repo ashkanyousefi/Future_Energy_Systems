@@ -1,11 +1,11 @@
-import tensorflow as tf
-import numpy as np
-import tflearn
 import argparse
 import pprint as pp
-
 from collections import *
-from SingleDeviceEnv import *
+
+import tensorflow as tf
+import tflearn
+
+from single_device_env import *
 
 
 class ReplayBuffer(object):

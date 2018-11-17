@@ -1,11 +1,10 @@
 from random import random
 
-import gym
 import numpy as np
 import tensorflow as tf
 from gym import wrappers
 
-import run_dqn_SingleDevice
+import single_device_env
 
 
 class GymDQNLearner:
@@ -239,136 +238,9 @@ class GymDQNLearner:
 
 
 if __name__ == '__main__':
-    tr = False
+    tr = True
     model = GymDQNLearner()
     if tr:
         model.train()
     episode_reward = model.play(False, False, 2000)
     print('total reward: %f' % episode_reward)
-
-#
-# rewards = []
-# total_reward = -1
-# while total_reward < 1000:
-#     total_reward = model.play(False, False, 2000)
-#     rewards.append(total_reward)
-#     print('total reward: %f' % total_reward)
-#     print('reward mean: %f, std: %f' % (np.mean(rewards), np.std(rewards)))
-self.last_obs = next_obs
-
-
-def update_model(self):
-    ### 3. Perform experience replay and train the network.
-    # note that this is only done if the replay buffer contains enough samples
-    # for us to learn something useful -- until then, the model will not be
-    # initialized and random actions should be taken
-    if (self.t > self.learning_starts and \
-            self.t % self.learning_freq == 0 and \
-            self.replay_buffer.can_sample(self.batch_size)):
-        # Here, you should perform training. Training consists of four steps:
-        # 3.a: use the replay buffer to sample a batch of transitions (see the
-        # replay buffer code for function definition, each batch that you sample
-        # should consist of current observations, current actions, rewards,
-        # next observations, and done indicator).
-        # 3.b: initialize the model if it has not been initialized yet; to do
-        # that, call
-        #    initialize_interdependent_variables(self.session, tf.global_variables(), {
-        #        self.obs_t_ph: obs_t_batch,
-        #        self.obs_tp1_ph: obs_tp1_batch,
-        #    })
-        # where obs_t_batch and obs_tp1_batch are the batches of observations at
-        # the current and next time step. The boolean variable model_initialized
-        # indicates whether or not the model has been initialized.
-        # Remember that you have to update the target network too (see 3.d)!
-        # 3.c: train the model. To do this, you'll need to use the self.train_fn and
-        # self.total_error ops that were created earlier: self.total_error is what you
-        # created to compute the total Bellman error in a batch, and self.train_fn
-        # will actually perform a gradient step and update the network parameters
-        # to reduce total_error. When calling self.session.run on these you'll need to
-        # populate the following placeholders:
-        # self.obs_t_ph
-        # self.act_t_ph
-        # self.rew_t_ph
-        # self.obs_tp1_ph
-        # self.done_mask_ph
-        # (this is needed for computing self.total_error)
-        # self.learning_rate -- you can get this from self.optimizer_spec.lr_schedule.value(t)
-        # (this is needed by the optimizer to choose the learning rate)
-        # 3.d: periodically update the target network by calling
-        # self.session.run(self.update_target_fn)
-        # you should update every target_update_freq steps, and you may find the
-        # variable self.num_param_updates useful for this (it was initialized to 0)
-        #####
-
-        # YOUR CODE HERE
-        # 1. Sample a batch of transitions
-        obs_t, act, rew, obs_tp1, done_mask = self.replay_buffer.sample(self.batch_size)
-
-        if not self.model_initialized:
-            initialize_interdependent_variables(self.session, tf.global_variables(),
-                                                {self.obs_t_ph: obs_t, self.obs_tp1_ph: obs_tp1, })
-        self.model_initialized = True
-
-        # training model
-        feed_dict = {self.obs_t_ph: obs_t,
-                     self.act_t_ph: act,
-                     self.rew_t_ph: rew,
-                     self.obs_tp1_ph: obs_tp1,
-                     self.done_mask_ph: done_mask,
-                     self.learning_rate: self.optimizer_spec.lr_schedule.value(self.t)
-                     }
-        self.session.run(self.train_fn, feed_dict=feed_dict)
-
-        if self.num_param_updates % self.target_update_freq == 0:
-            self.session.run(self.update_target_fn)
-
-        self.num_param_updates += 1
-
-    self.t += 1
-
-
-def log_progress(self):
-    episode_rewards = self.env.episode_rewards
-
-    if len(episode_rewards) > 0:
-        self.mean_episode_reward = np.mean(episode_rewards[-100:])
-
-    if len(episode_rewards) > 100:
-        self.best_mean_episode_reward = max(self.best_mean_episode_reward, self.mean_episode_reward)
-
-    if self.t % self.log_every_n_steps == 0 and self.model_initialized:
-        print("Timestep %d" % (self.t,))
-        print("mean reward (100 episodes) %f" % self.mean_episode_reward)
-        print("best mean reward %f" % self.best_mean_episode_reward)
-        print("episodes %d" % len(episode_rewards))
-        print("exploration %f" % self.exploration.value(self.t))
-        print("learning_rate %f" % self.optimizer_spec.lr_schedule.value(self.t))
-        if self.start_time is not None:
-            print("running time %f" % ((time.time() - self.start_time) / 60.))
-
-        self.start_time = time.time()
-
-        sys.stdout.flush()
-
-        # Record accurate time stamp and reward
-        self.timestep_log.append(self.t)
-        self.mean_reward_log.append(self.mean_episode_reward)
-        self.best_reward_log.append(self.best_mean_episode_reward)
-
-        log = {'Timestep': np.array(self.timestep_log),
-               'mean': np.array(self.mean_reward_log),
-               'best': np.array(self.best_reward_log)}
-
-        with open(self.rew_file, 'wb') as f:
-            pickle.dump(log, f, pickle.HIGHEST_PROTOCOL)
-
-
-def learn(*args, **kwargs):
-    alg = QLearner(*args, **kwargs)
-    while not alg.stopping_criterion_met():
-        alg.step_env()
-        # at this point, the environment should have been advanced one step (and
-        # reset if done was true), and self.last_obs should point to the new latest
-        # observation
-        alg.update_model()
-        alg.log_progress()
