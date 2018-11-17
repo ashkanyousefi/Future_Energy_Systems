@@ -106,5 +106,6 @@ def main():
     set_global_seeds(seed)
     learn(env, session, num_timesteps=1e5, seed=seed)
 
+
 if __name__ == "__main__":
     main()
