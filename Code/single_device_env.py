@@ -44,9 +44,25 @@ class Environment:
         return np.shape(self.get_obs())
 
     def get_obs(self):
-        return [self.time_stamp, self.state_accumulation]
+        return [self.time_stamp, self.state_accumulation, self.schedule_start, self.usage_duration, self.schedule_stop]
 
     def reward(self, action):
+        in_schedule_condition = self.schedule_start <= self.time_stamp < self.schedule_stop
+        at_schedule_stop = self.time_stamp == self.schedule_stop
+
+        reward_function = (1 - in_schedule_condition) * \
+                          (at_schedule_stop * self.encourage * (self.usage_duration - \
+                                                                np.abs(self.usage_duration - self.state_accumulation)) + \
+                           action * self.penalty +
+                           (1 - action) * self.encourage) + \
+                          in_schedule_condition * (
+                                  action * (self.electricity_cost[self.time_stamp] * self.appliances_consumption) + \
+                                  (1 - action) * self.udc * self.appliances_consumption)
+        reward_function *= -1
+        self.episode_rewards.append(reward_function)
+        return reward_function
+
+    def old_reward(self, action):
         in_schedule_condition = self.schedule_start <= self.time_stamp <= self.schedule_stop
         at_schedule_stop = self.time_stamp == self.schedule_stop
 
