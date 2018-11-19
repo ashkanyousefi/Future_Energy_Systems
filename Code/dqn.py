@@ -174,13 +174,14 @@ class GymDQNLearner:
             self.save()
             epoch_total_reward = self.play()
             print(
-                "*********** epoch {} ***********\n"
-                "memory size: {}, mean state weights: {}\n"
-                "total loss: {}\n"
-                "total reward gained: {}\n"
-                "epsilon: {}".format(epoch, self.experience_replay_memory.shape[0],
-                                     np.mean([s['weight'] for s in self.experience_replay_memory]),
-                                     epoch_loss, epoch_total_reward, self.get_epsilon(epoch)))
+                "*********** epoch %d ***********\n"
+                "memory size: %d, mean-max state weights: %.3f\t%.3f\n"
+                "total loss: %f\n"
+                "total reward gained: %f\n"
+                "epsilon: %.3f" % (epoch, self.experience_replay_memory.shape[0],
+                                   np.mean([s['weight'] for s in self.experience_replay_memory]),
+                                   np.max([s['weight'] for s in self.experience_replay_memory]),
+                                   epoch_loss, epoch_total_reward, self.get_epsilon(epoch)))
             epoch += 1
 
     def play(self, render=False, monitor=False, max_timestep=None):
@@ -206,11 +207,12 @@ class GymDQNLearner:
             # if mod in (0, 1, 2, 3):
             # action = env.action_space.sample()
             # action = 1 - action
-            observation, reward, done, info = env.step(action)
+            new_observation, reward, done, info = env.step(action)
             if not tr:
                 print(f'action selected: {action}, obs: {observation}, reward: {reward}')
             total_reward += reward
             timestep += 1
+            observation = new_observation
             if done:
                 break
             if max_timestep is not None:
@@ -238,7 +240,7 @@ class GymDQNLearner:
 
 
 if __name__ == '__main__':
-    tr = True
+    tr = False
     model = GymDQNLearner()
     if tr:
         model.train()
