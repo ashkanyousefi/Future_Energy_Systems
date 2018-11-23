@@ -114,7 +114,10 @@ def get_random_env():
 
 if __name__ == '__main__':
     env = get_random_env()
+    rewards = []
     while not env.done:
         a = np.random.randint(0, 2)
         ob, r, done, _ = env.step(a)
+        rewards.append(r)
         print(f'action: {a}, reward: {r}, obs: {ob}')
+    print("Mean reward of random actions: %s " % (sum(rewards) / len(rewards)))

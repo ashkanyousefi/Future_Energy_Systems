@@ -1,15 +1,21 @@
 from random import random
 
+import argparse
 import numpy as np
 import tensorflow as tf
 from gym import wrappers
 
 import single_device_env
+from multiple_device_env import MultipleDeviceEnvironment
 
 
 class GymDQNLearner:
-    def __init__(self):
-        self.saving_path = './saved_models/dqn/'
+    def __init__(self, multiple, num_devices):
+        if multiple:
+            self.saving_path = './saved_models/dqn/multiple/%s/' % (num_devices)
+        else:
+            self.saving_path = './saved_models/dqn/single/'
+        self.num_devices = num_devices
         self.epochs = 10000
         self.gamma = .9
         self.epsilon = 1.
@@ -22,11 +28,14 @@ class GymDQNLearner:
         # self.env = gym.make('CartPole-v0').env
         # self.state_embedding_size = self.env.observation_space.shape[0]
         # self.number_of_actions = self.env.action_space.n
-        self.env = single_device_env.get_random_env()
+        if not multiple:
+            self.env = single_device_env.get_random_env()
+        else:
+            self.env = MultipleDeviceEnvironment(num_devices)
         self.state_embedding_size = self.env.get_obs_shape()[0]
         self.number_of_actions = self.env.get_action_shape()
         print(self.state_embedding_size, self.number_of_actions)
-        self.layer_units = [32, 16, self.number_of_actions]
+        self.layer_units = [32, 16, int(2**self.number_of_actions)]
         # self.layer_units = [64, 32, self.number_of_actions]
         self.layer_activations = ['tanh', 'relu', None]
         # self.layer_keep_probs = [.1, .1, 1.]
@@ -110,7 +119,7 @@ class GymDQNLearner:
 
     def create_model(self):
         self.inputs = tf.placeholder(np.float32, [None, self.state_embedding_size], name='inputs')
-        self.outputs = tf.placeholder(np.float32, [None, self.number_of_actions], name='outputs')
+        self.outputs = tf.placeholder(np.float32, [None, int(2**self.number_of_actions)], name='outputs')
 
         self.output_layer = \
             self.create_multilayer_dense('q_func', self.inputs, self.layer_units, self.layer_activations,
@@ -130,6 +139,7 @@ class GymDQNLearner:
             action = self.env.action_space_sample()
         else:
             action = np.argmax(q_value)
+            action = [int(a) for a in ("{0:0" + str(self.num_devices) + "b}").format(action)]
         return action
 
     def generate_new_trajectories(self, epoch):
@@ -200,6 +210,8 @@ class GymDQNLearner:
             q_value = self.sess.run(self.test_output_layer, {self.inputs: [observation]})[0]
             # action = env.action_space.sample() # random action
             action = np.argmax(q_value)
+            # mapping integer to actual actions
+            action = [int(a) for a in ("{0:0" + str(self.num_devices) + "b}").format(action)]
             if timestep == self.max_trajectory_length:
                 print(total_reward)
                 break
@@ -208,8 +220,9 @@ class GymDQNLearner:
             # action = env.action_space.sample()
             # action = 1 - action
             new_observation, reward, done, info = env.step(action)
-            if not tr:
-                print(f'action selected: {action}, obs: {observation}, reward: {reward}')
+            #!!! tr is out of scope due to training is in main function now
+            #if not tr: 
+            #   print(f'action selected: {action}, obs: {observation}, reward: {reward}')
             total_reward += reward
             timestep += 1
             observation = new_observation
@@ -239,10 +252,18 @@ class GymDQNLearner:
             print('Model loaded!')
 
 
-if __name__ == '__main__':
-    tr = False
-    model = GymDQNLearner()
+def main(multiple, dnum):
+    tr = True
+    model = GymDQNLearner(multiple, dnum)
     if tr:
         model.train()
     episode_reward = model.play(False, False, 2000)
     print('total reward: %f' % episode_reward)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--multiple', action='store_true')
+    parser.add_argument('--dnum', default=3)
+    args = parser.parse_args()
+    main(multiple=args.multiple, dnum=args.dnum)
+
