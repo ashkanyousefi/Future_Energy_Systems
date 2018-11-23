@@ -28,7 +28,7 @@ class Environment:
         print(f'schedule: {self.schedule_start} - {self.schedule_stop}, duration: {self.usage_duration}')
 
     def get_action_shape(self):
-        return 2
+        return 1
 
     def reset(self):
         self.done = False
@@ -38,7 +38,7 @@ class Environment:
         return self.get_obs()
 
     def action_space_sample(self):
-        return random.randint(0, 1)
+        return [random.randint(0, 1)]
 
     def get_obs_shape(self):
         return np.shape(self.get_obs())
@@ -83,6 +83,9 @@ class Environment:
         return reward_function
 
     def step(self, action):
+        # Compatible to multiple device
+        action = action[0]
+
         self.history_actions.append(action)
         self.state_accumulation += action
         if self.state_accumulation != self.usage_duration and self.time_stamp == self.schedule_stop:

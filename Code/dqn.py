@@ -15,7 +15,10 @@ class GymDQNLearner:
             self.saving_path = './saved_models/dqn/multiple/%s/' % (num_devices)
         else:
             self.saving_path = './saved_models/dqn/single/'
+
         self.num_devices = num_devices
+        self.formatstr = "{0:0" + str(self.num_devices) + "b}"
+
         self.epochs = 10000
         self.gamma = .9
         self.epsilon = 1.
@@ -139,7 +142,7 @@ class GymDQNLearner:
             action = self.env.action_space_sample()
         else:
             action = np.argmax(q_value)
-            action = [int(a) for a in ("{0:0" + str(self.num_devices) + "b}").format(action)]
+            action = [int(a) for a in self.formatstr.format(action)]
         return action
 
     def generate_new_trajectories(self, epoch):
@@ -211,7 +214,7 @@ class GymDQNLearner:
             # action = env.action_space.sample() # random action
             action = np.argmax(q_value)
             # mapping integer to actual actions
-            action = [int(a) for a in ("{0:0" + str(self.num_devices) + "b}").format(action)]
+            action = [int(a) for a in self.formatstr.format(action)]
             if timestep == self.max_trajectory_length:
                 print(total_reward)
                 break
@@ -254,6 +257,8 @@ class GymDQNLearner:
 
 def main(multiple, dnum):
     tr = True
+    if not multiple:
+        dnum = 1
     model = GymDQNLearner(multiple, dnum)
     if tr:
         model.train()

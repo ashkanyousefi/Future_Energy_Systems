@@ -69,7 +69,7 @@ def get_random_env():
     penalty = 10.
     encourage = -10.
 
-    return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop,
+    return MultipleDeviceEnvironment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop,
                        usage_duration, penalty, encourage)
 
 
