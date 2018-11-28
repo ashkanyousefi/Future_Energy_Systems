@@ -33,7 +33,7 @@ class MultipleDeviceEnvironment:
         return [random.randint(0, 1) for _ in self.devices]
 
     def get_obs_shape(self):
-        return np.shape(self.get_obs())
+        return len(self.get_obs())
 
     def get_obs(self):
         obs = [self.time_stamp]
@@ -49,6 +49,9 @@ class MultipleDeviceEnvironment:
         return r
 
     def step(self, action):
+        if len(action) != len(self.devices):
+            raise AssertionError("Need %s actions, but %s actions are provided" % (len(self.devices), len(action)))
+
         self.history_actions.append(action)
 
         obs = [self.time_stamp]

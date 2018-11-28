@@ -28,7 +28,7 @@ class Environment:
         print(f'schedule: {self.schedule_start} - {self.schedule_stop}, duration: {self.usage_duration}')
 
     def get_action_shape(self):
-        return 2
+        return 1
 
     def reset(self):
         self.done = False
@@ -38,10 +38,10 @@ class Environment:
         return self.get_obs()
 
     def action_space_sample(self):
-        return random.randint(0, 1)
+        return [random.randint(0, 1)]
 
     def get_obs_shape(self):
-        return np.shape(self.get_obs())
+        return len(self.get_obs())
 
     def get_obs(self):
         return [self.time_stamp, self.state_accumulation, self.schedule_start, self.usage_duration, self.schedule_stop]
@@ -83,6 +83,9 @@ class Environment:
         return reward_function
 
     def step(self, action):
+        # Compatible to multiple device
+        action = action[0]
+
         self.history_actions.append(action)
         self.state_accumulation += action
         if self.state_accumulation != self.usage_duration and self.time_stamp == self.schedule_stop:
@@ -115,9 +118,15 @@ def get_random_env():
 if __name__ == '__main__':
     env = get_random_env()
     rewards = []
+    count = 0
     while not env.done:
         a = np.random.randint(0, 2)
-        ob, r, done, _ = env.step(a)
+        a = 0
+        if count == 5:
+            a = 1
+        count += 1
+        ob, r, done, _ = env.step([a])
         rewards.append(r)
         print(f'action: {a}, reward: {r}, obs: {ob}')
+    print("Sum reward of episode: %s" % (sum(rewards)))
     print("Mean reward of random actions: %s " % (sum(rewards) / len(rewards)))
