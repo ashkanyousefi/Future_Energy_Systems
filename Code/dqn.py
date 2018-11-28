@@ -2,12 +2,16 @@ from random import random
 
 import argparse
 import numpy as np
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from gym import wrappers
 
 import single_device_env
 from multiple_device_env import MultipleDeviceEnvironment
 
+mean_return_log = []
 
 class GymDQNLearner:
     def __init__(self, multiple, num_devices):
@@ -19,7 +23,7 @@ class GymDQNLearner:
         self.num_devices = num_devices
         self.formatstr = "{0:0" + str(self.num_devices) + "b}"
 
-        self.epochs = 10000
+        self.epochs = 1500
         self.gamma = .9
         self.epsilon = 1.
         self.train_per_epoch = 1
@@ -35,7 +39,7 @@ class GymDQNLearner:
             self.env = single_device_env.get_random_env()
         else:
             self.env = MultipleDeviceEnvironment(num_devices)
-        self.state_embedding_size = self.env.get_obs_shape()[0]
+        self.state_embedding_size = self.env.get_obs_shape()
         self.number_of_actions = self.env.get_action_shape()
         print(self.state_embedding_size, self.number_of_actions)
         self.layer_units = [32, 16, int(2**self.number_of_actions)]
@@ -186,15 +190,18 @@ class GymDQNLearner:
                                               {self.inputs: batch_observations, self.outputs: batch_q_values})
             self.save()
             epoch_total_reward = self.play()
+            mean_reward = np.mean([s['weight'] for s in self.experience_replay_memory])
+            max_reward = np.max([s['weight'] for s in self.experience_replay_memory])
             print(
                 "*********** epoch %d ***********\n"
                 "memory size: %d, mean-max state weights: %.3f\t%.3f\n"
                 "total loss: %f\n"
                 "total reward gained: %f\n"
                 "epsilon: %.3f" % (epoch, self.experience_replay_memory.shape[0],
-                                   np.mean([s['weight'] for s in self.experience_replay_memory]),
-                                   np.max([s['weight'] for s in self.experience_replay_memory]),
+                                   mean_reward,
+                                   max_reward,
                                    epoch_loss, epoch_total_reward, self.get_epsilon(epoch)))
+            mean_return_log.append(mean_reward)
             epoch += 1
 
     def play(self, render=False, monitor=False, max_timestep=None):
@@ -255,7 +262,7 @@ class GymDQNLearner:
             print('Model loaded!')
 
 
-def main(multiple, dnum):
+def main(multiple, dnum, fig_path="exp.png"):
     tr = True
     if not multiple:
         dnum = 1
@@ -264,11 +271,17 @@ def main(multiple, dnum):
         model.train()
     episode_reward = model.play(False, False, 2000)
     print('total reward: %f' % episode_reward)
+    if multiple:
+        fig_path = "mul_%s_" % (dnum) + fig_path
+    with open(fig_path[:-4]+".txt", "w+") as f:
+        for l in mean_return_log:
+            f.write(str(l) + "\n")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--multiple', action='store_true')
     parser.add_argument('--dnum', default=3)
+    parser.add_argument('--path', default="exp.png")
     args = parser.parse_args()
-    main(multiple=args.multiple, dnum=args.dnum)
+    main(multiple=args.multiple, dnum=args.dnum, fig_path=args.path)
 

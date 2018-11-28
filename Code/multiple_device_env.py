@@ -14,8 +14,8 @@ class MultipleDeviceEnvironment:
         else:
             self.devices = [single_device_env.get_random_env() for _ in range(num_devices)]
         self.history_actions = []
-
-        self.reset()
+        self.done = False
+        self.time_stamp = 0
         for d in self.devices:
             print(f'schedule: {d.schedule_start} - {d.schedule_stop}, duration: {d.usage_duration}')
 
@@ -33,12 +33,13 @@ class MultipleDeviceEnvironment:
         return [random.randint(0, 1) for _ in self.devices]
 
     def get_obs_shape(self):
-        return np.shape(self.get_obs())
+        return len(self.get_obs())
 
     def get_obs(self):
-        obs = []
+        obs = [self.time_stamp]
         for d in self.devices:
-            obs.extend(d.get_obs())
+            ob = d.get_obs()
+            obs.extend(ob[1:])
         return np.array(obs)
 
     def reward(self, action):
@@ -48,11 +49,22 @@ class MultipleDeviceEnvironment:
         return r
 
     def step(self, action):
+        if len(action) != len(self.devices):
+            raise AssertionError("Need %s actions, but %s actions are provided" % (len(self.devices), len(action)))
+
         self.history_actions.append(action)
-        reward = self.reward(action)
+
+        obs = [self.time_stamp]
+        reward = 0
+
+        for d, a in zip(self.devices, action):
+            ob, r, done, _ = d.step([a])
+            obs.extend(ob[1:])
+            reward += r
         self.time_stamp += 1
         self.done = self.time_stamp == 24
-        return self.get_obs(), reward, self.done, None
+
+        return obs, reward, self.done, None
 
 def get_random_env():
     appliances_number = 1

@@ -41,7 +41,7 @@ class Environment:
         return [random.randint(0, 1)]
 
     def get_obs_shape(self):
-        return np.shape(self.get_obs())
+        return len(self.get_obs())
 
     def get_obs(self):
         return [self.time_stamp, self.state_accumulation, self.schedule_start, self.usage_duration, self.schedule_stop]
@@ -118,9 +118,15 @@ def get_random_env():
 if __name__ == '__main__':
     env = get_random_env()
     rewards = []
+    count = 0
     while not env.done:
         a = np.random.randint(0, 2)
-        ob, r, done, _ = env.step(a)
+        a = 0
+        if count == 5:
+            a = 1
+        count += 1
+        ob, r, done, _ = env.step([a])
         rewards.append(r)
         print(f'action: {a}, reward: {r}, obs: {ob}')
+    print("Sum reward of episode: %s" % (sum(rewards)))
     print("Mean reward of random actions: %s " % (sum(rewards) / len(rewards)))
