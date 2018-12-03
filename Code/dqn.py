@@ -263,24 +263,32 @@ class GymDQNLearner:
 
 
 def main(multiple, dnum, fig_path="exp.png"):
+    if not os.path.exists("./logs"):
+        os.makedirs("./logs")
     tr = True
     if not multiple:
         dnum = 1
     model = GymDQNLearner(multiple, dnum)
     if tr:
+        import time
+        start_time = time.time()
         model.train()
+        time_cost = time.time() - start_time
+        with open("./logs/dqn_%s_runtime.txt" % dnum, "w+") as f:
+            f.write(str(time_cost))
+
     episode_reward = model.play(False, False, 2000)
     print('total reward: %f' % episode_reward)
     if multiple:
         fig_path = "mul_%s_" % (dnum) + fig_path
-    with open(fig_path[:-4]+".txt", "w+") as f:
+    with open("./logs/" + fig_path[:-4]+".txt", "w+") as f:
         for l in mean_return_log:
             f.write(str(l) + "\n")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--multiple', action='store_true')
-    parser.add_argument('--dnum', default=3)
+    parser.add_argument('--dnum', type=int, default=3)
     parser.add_argument('--path', default="exp.png")
     args = parser.parse_args()
     main(multiple=args.multiple, dnum=args.dnum, fig_path=args.path)

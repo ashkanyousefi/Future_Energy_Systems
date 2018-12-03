@@ -114,6 +114,20 @@ def get_random_env():
     return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop,
                        usage_duration, penalty, encourage)
 
+def get_random_env_alter():
+    appliances_number = 1
+    udc = 0.
+    electricity_cost = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 12, 12, 5, 5, 5, 5, 10, 10, 10, 5, 5, 5])
+    # appliances_consumption = np.random.randint(1, 10) / 10
+    schedule_start = np.random.randint(0, 12)
+    schedule_stop = np.random.randint(13, 23)
+    usage_duration = np.random.randint(0, schedule_stop - schedule_start)
+    appliances_consumption = 1
+    penalty = 10.
+    encourage = -10.
+
+    return Environment(appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop,
+                       usage_duration, penalty, encourage)
 
 if __name__ == '__main__':
     env = get_random_env()
