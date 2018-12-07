@@ -10,6 +10,7 @@ import numpy as np
 class Environment:
     def __init__(self, appliances_number, appliances_consumption, electricity_cost, udc, schedule_start, schedule_stop
                  , usage_duration, penalty, encourage):
+        self.advise = False
         self.appliances_number = appliances_number
         self.appliances_consumption = appliances_consumption
         self.electricity_cost = electricity_cost
@@ -44,7 +45,15 @@ class Environment:
         return len(self.get_obs())
 
     def get_obs(self):
-        return [self.time_stamp, self.state_accumulation, self.schedule_start, self.usage_duration, self.schedule_stop]
+        obs = [self.time_stamp, self.state_accumulation, self.schedule_start, self.usage_duration, self.schedule_stop]
+        if self.advise:
+            # Giving optimal advise currently
+            if self.time_stamp >= 5 and self.time_stamp <= 8:
+                a = 1
+            else:
+                a = 0
+            obs.append(a)
+        return obs
 
     def reward(self, action):
         in_schedule_condition = self.schedule_start <= self.time_stamp < self.schedule_stop
@@ -136,7 +145,7 @@ if __name__ == '__main__':
     while not env.done:
         a = np.random.randint(0, 2)
         a = 0
-        if count == 5:
+        if count >= 5 and count <= 8:
             a = 1
         count += 1
         ob, r, done, _ = env.step([a])
