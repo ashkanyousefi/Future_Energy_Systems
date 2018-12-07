@@ -6,7 +6,6 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from gym import wrappers
 
 import single_device_env
 from multiple_device_env import MultipleDeviceEnvironment
@@ -210,10 +209,7 @@ class GymDQNLearner:
         observation = self.env.reset()
         reward = None
         timestep = 0
-        if monitor:
-            env = wrappers.Monitor(self.env, "./monitors/dqn/", force=True)
-        else:
-            env = self.env
+        env = self.env
         while not done:
             if render:
                 env.render()
